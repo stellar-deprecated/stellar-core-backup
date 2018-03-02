@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+# requires IAM role/Environment variables for aws auth
+require 'stellar-core-backup'
+require 'optparse'
+
+options = {}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options]"
+  opts.on("-b", "--backup", "cold backup stellar-core") do |b|
+    options[:backup] = b
+  end
+  opts.on("-c CONFIG", "--config", "configuration file to use") do |c|
+    options[:config] = c
+  end
+  opts.on("-l", "--list", "list all backups") do |l|
+    options[:list] = l
+  end
+  opts.on("-r", "--restore", "offline restore, uses latest backup") do |r|
+    options[:restore] = r
+  end
+end.parse!
+
+if options[:backup] then
+  scb = StellarCoreBackup::Job.new(
+    :config => options[:config],
+    :type   => 'backup'
+  )
+  scb.run()
+elsif options[:restore]
+  scb = StellarCoreBackup::Job.new(
+    :config => options[:config],
+    :type   => 'restore'
+  )
+  scb.run()
+end
