@@ -13,6 +13,8 @@ module StellarCoreBackup
   autoload :S3, "stellar-core-backup/s3"
   autoload :Utils, "stellar-core-backup/utils"
 
-  # TODO: @scott is this the best way to include the restore submodule ?
-  autoload :Restore, "stellar-core-backup/restore"
+  module Restore
+    autoload :Database, "stellar-core-backup/restore/database"
+    autoload :Filesystem, "stellar-core-backup/restore/filesystem"
+  end
 end
