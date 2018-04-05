@@ -1,6 +1,10 @@
 # StellarCoreBackup
 
-TODO
+Create an offline backup of stellar-core buckets and a corresponding backup of the PostgreSQL database. Push both to a S3 bucket.
+
+Restore a stellar-core node, retrieving latest pushed backup from S3.
+
+Options are configurable in a config file passed in with the `--config` argument.
 
 ## Assumptions about environment
 
@@ -8,11 +12,37 @@ At present `stellar-core-backup` makes a few assumptions about the environment i
 
 ## Usage As Command Line Tool
 
-TODO
+##### backup
+
+```
+stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --backup
+```
+
+##### restore latest backup
+
+```
+stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --restore
+```
 
 ## Usage as a Library
 
-TODO
+```ruby
+require 'stellar-core-backup'
+
+if options[:backup] then
+  scb = StellarCoreBackup::Job.new(
+    :config => '/etc/stellar/stellar-core-backup.conf',
+    :type   => 'backup'
+  )
+  scb.run()
+elsif options[:restore]
+  scb = StellarCoreBackup::Job.new(
+    :config => '/etc/stellar/stellar-core-backup.conf',
+    :type   => 'restore'
+  )
+  scb.run()
+end
+```
 
 ## Contributing
 
