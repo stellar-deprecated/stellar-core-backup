@@ -40,6 +40,7 @@ module StellarCoreBackup::Restore
         # unpack the tar ball
         puts "info: unpacking #{archive} to #{unpack_to}"
         Minitar.unpack(archive, unpack_to)
+        nil
       end
     end
 
