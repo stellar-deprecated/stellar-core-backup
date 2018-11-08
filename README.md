@@ -1,14 +1,22 @@
 # StellarCoreBackup
 
-Create an offline backup of stellar-core buckets and a corresponding backup of the PostgreSQL database. Push both to a S3 bucket.
+This application is a basic backup/restore library which creates offline/cold backups and pushes them to S3. Backups can be restored automatically but a pre-restore manual removal of bucket data is required as it doesn't try and overwrite the stellar buckets directory.
 
-Restore a stellar-core node, retrieving latest pushed backup from S3.
-
-Options are configurable in a config file passed in with the `--config` argument.
+All options are configurable in a config file passed in with the `--config` argument.
 
 ## Assumptions about environment
 
-At present `stellar-core-backup` makes a few assumptions about the environment it runs in that you should be aware.  In the event that your own environment differs from the below assumptions, `stellar-core-backup` will definitely break.
+At present `stellar-core-backup` makes a few assumptions about the environment that you should be aware of, it expects stellar-core to be installed using the official Debian binary packages available at https://github.com/stellar/packages.  In the event that your own environment differs from the below assumptions, `stellar-core-backup` will definitely break.
+
+## Configuration
+
+| config param | description |
+|--------------|-------------|
+|working_dir| Path to working directory which will hold temporary files, needs sufficient space to store and untar 1 backup|
+|core_config| Path to stellar-core configuration file of the node we are backing up, retrieves database credentials, etc.|
+|backup_dir| Path to directory which will hold the final backup|
+|s3_bucket| S3 bucket to store/retrieve buckets to/from|
+|s3_path| S3 Path prefix, can be used for backing up multiple core nodes to the same bucket|
 
 ## Usage As Command Line Tool
 
@@ -21,6 +29,8 @@ stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --backup
 ##### restore latest backup
 
 ```
+# manual removal of bucket data
+rm -r /var/lib/stellar/buckets/*
 stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --restore
 ```
 
