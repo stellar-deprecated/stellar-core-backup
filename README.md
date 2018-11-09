@@ -1,12 +1,14 @@
 # StellarCoreBackup
 
-This application is a basic backup/restore library which creates offline/cold backups and pushes them to S3. Backups can be restored automatically but a pre-restore manual removal of bucket data is required as it doesn't try and overwrite the stellar buckets directory.
+This application is a simple backup/restore library which creates offline/cold backups and pushes them to S3. Backups can be restored automatically but a pre-restore manual removal of bucket data is required as stellar-core-backup doesn't overwrite the stellar buckets directory.
 
 All options are configurable in a config file passed in with the `--config` argument.
 
 ## Assumptions about environment
 
-At present `stellar-core-backup` makes a few assumptions about the environment that you should be aware of, it expects stellar-core to be installed using the official Debian binary packages available at https://github.com/stellar/packages.  In the event that your own environment differs from the below assumptions, `stellar-core-backup` will definitely break.
+At present `stellar-core-backup` makes a few assumptions about the environment that you should be aware of, it expects stellar-core to be installed using the official Debian binary packages available at https://github.com/stellar/packages.  In the event that your own environment differs from the above assumptions, `stellar-core-backup` will likely break.
+
+AWS credentials can be exported as environment variables or permissions can be granted by an IAM instance role.
 
 ## Configuration
 
