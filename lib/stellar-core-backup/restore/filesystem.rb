@@ -1,5 +1,3 @@
-require 'minitar'
-
 module StellarCoreBackup::Restore
   class Filesystem < ::StellarCoreBackup::Filesystem
     include Contracts
@@ -18,8 +16,10 @@ module StellarCoreBackup::Restore
     public
     Contract String => nil
     def restore(backup_archive)
-      unpack(backup_archive, @working_dir)
-      puts "info: stellar-core buckets restored" if unpack("#{@working_dir}/core-fs.tar", @core_data_dir)
+      # unpack the backup archive
+      StellarCoreBackup::Tar.unpack(backup_archive, @working_dir)
+      # unpack the filesystem backup
+      puts "info: stellar-core buckets restored" if StellarCoreBackup::Tar.unpack("#{@working_dir}/core-fs.tar", @core_data_dir)
     end
 
     Contract nil => Bool
@@ -30,17 +30,6 @@ module StellarCoreBackup::Restore
       else
         puts "error: #{@core_data_dir} is not empty, you can only restore to an empty data directory"
         raise DataDirNotEmpty
-      end
-    end
-
-    private
-    Contract String, String => nil
-    def unpack(archive, unpack_to)
-      if StellarCoreBackup::Utils.writable?(unpack_to) then
-        # unpack the tar ball
-        puts "info: unpacking #{archive} to #{unpack_to}"
-        Minitar.unpack(archive, unpack_to)
-        nil
       end
     end
 

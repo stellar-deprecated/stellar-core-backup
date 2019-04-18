@@ -11,6 +11,7 @@ module StellarCoreBackup
   autoload :Filesystem, "stellar-core-backup/filesystem"
   autoload :Job, "stellar-core-backup/job"
   autoload :S3, "stellar-core-backup/s3"
+  autoload :Tar, "stellar-core-backup/tar"
   autoload :Utils, "stellar-core-backup/utils"
 
   module Restore

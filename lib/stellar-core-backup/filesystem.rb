@@ -1,5 +1,3 @@
-require 'minitar'
-
 module StellarCoreBackup
   class Filesystem
     include Contracts
@@ -27,7 +25,7 @@ module StellarCoreBackup
         # create the tar balls
         puts "info: creating filesystem backup"
         Dir.chdir(@core_data_dir)
-        Minitar.pack('.', File.open("#{@working_dir}/core-fs.tar", 'wb'))
+        StellarCoreBackup::Tar.pack("#{@working_dir}/core-fs.tar", '.')
         Dir.chdir(@working_dir)
       end
     end

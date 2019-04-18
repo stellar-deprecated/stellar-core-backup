@@ -19,7 +19,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "contracts", "~> 0.9"
   spec.add_dependency "pg", "~> 0.18.1"
-  spec.add_dependency "minitar", "~> 0.6.1"
   spec.add_dependency "aws-sdk-s3", "~> 1"
 
   spec.add_development_dependency "bundler", "~> 1.7"
