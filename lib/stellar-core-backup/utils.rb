@@ -1,5 +1,4 @@
 require 'fileutils'
-require 'minitar'
 
 module StellarCoreBackup
   class Utils
@@ -42,7 +41,8 @@ module StellarCoreBackup
       puts 'info: creating backup tarball'
       tar_file = "#{backup_dir}/core-backup-#{Time.now.to_i}.tar"
       Dir.chdir(working_dir)
-      Minitar.pack('.', File.open(tar_file, 'wb'))
+      # archive the working directory
+      StellarCoreBackup::Tar.pack(tar_file, '.')
       return tar_file
     end
 
