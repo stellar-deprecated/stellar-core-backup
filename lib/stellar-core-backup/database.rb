@@ -23,7 +23,7 @@ module StellarCoreBackup
     def pg_dump()
       cmd = StellarCoreBackup::Cmd.new(@working_dir)
       puts "info: connecting (#{get_db_details(@config.get('core_config')).gsub(/password=(.*)/, 'password=********')})"
-      pg_dump = cmd.run('pg_dump', ['--dbname', @dbname, '--format', 'd', '--file', "#{@working_dir}/core-db/"])
+      pg_dump = cmd.run('pg_dump', ['--dbname', @dbname, '--format', 'd', '--jobs', "#{StellarCoreBackup::Utils.num_cores?()}", '--file', "#{@working_dir}/core-db/"])
       if pg_dump.success then
         puts "info: database backup complete"
       end
