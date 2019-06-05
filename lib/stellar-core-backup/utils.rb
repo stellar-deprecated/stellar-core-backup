@@ -37,6 +37,20 @@ module StellarCoreBackup
     end
 
     Contract String, String => String
+    def self.create_hash_file(working_dir)
+      puts 'info: creating file of backup file hashes'
+      Dir.chdir(working_dir)
+      `find . -type f ! -name SHA256SUMS | xargs sha256sum > SHA256SUMS`
+    end
+
+    Contract String, String => String
+    def self.sign_hash_file(working_dir)
+      puts 'info: signing hash file'
+      Dir.chdir(working_dir)
+      `gpg --detach-sign SHA256SUMS`
+    end
+
+    Contract String, String => String
     def self.create_backup_tar(working_dir, backup_dir)
       puts 'info: creating backup tarball'
       tar_file = "#{backup_dir}/core-backup-#{Time.now.to_i}.tar"

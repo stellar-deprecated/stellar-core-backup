@@ -46,9 +46,15 @@ module StellarCoreBackup
             if stop_core.success then
               @db.backup
               @fs.backup
-              # create tar archive with both fs and db backups
+              @hashfiles = StellarCoreBackup::Utils.create_hash_file(@working_dir)
+              @hashsig = StellarCoreBackup::Utils.sign_hash_file(@working_dir)
+              # create tar archive with fs, db backup files, signed list of file shas256's and gpg signature.
               @backup = StellarCoreBackup::Utils.create_backup_tar(@working_dir, @backup_dir)
-              @s3.push(@backup)
+              if $debug
+                p "Debug => print tar_file"
+                p @backup
+              end
+              @s2.push(@backup)
             else
               puts 'error: can not stop stellar-core'
               raise StandardError
