@@ -2,7 +2,7 @@
 # requires IAM role/Environment variables for aws auth
 require 'stellar-core-backup'
 require 'optparse'
-#require 'tracer'
+
 
 options = { verify: 'V'}
 
@@ -30,8 +30,6 @@ OptionParser.new do |opts|
     $debug = 'on'
   end
 end.parse!
-
-#Tracer.on
 
 if ! options[:type]
   puts("No operation specified\nExitting\n")
