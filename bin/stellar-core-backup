@@ -2,13 +2,14 @@
 # requires IAM role/Environment variables for aws auth
 require 'stellar-core-backup'
 require 'optparse'
+#require 'tracer'
 
-options = {}
+options = { verify: 'V'}
 
 OptionParser.new do |opts|
   opts.banner = "Usage: #{$0} [options]"
   opts.on("-b", "--backup", "cold backup stellar-core") do |b|
-    options[:backup] = b
+    options[:type] = 'backup'
   end
   opts.on("-c CONFIG", "--config", "configuration file to use") do |c|
     options[:config] = c
@@ -17,20 +18,27 @@ OptionParser.new do |opts|
     options[:list] = l
   end
   opts.on("-r", "--restore", "offline restore, uses latest backup") do |r|
-    options[:restore] = r
+    options[:type] = 'restore'
+  end
+  opts.on("-R", "--rm", "auto-clean buckets directory") do |r|
+    options[:clean] = 'R'
+  end
+  opts.on("--no-verify", "Don't PGP sign backed up shasum file or verify restore files integrity (default on)") do |r|
+    options.delete(:verify)
+  end
+  opts.on("-d", "--debug", "dump debug output") do |r|
+    $debug = 'on'
   end
 end.parse!
 
-if options[:backup] then
-  scb = StellarCoreBackup::Job.new(
-    :config => options[:config],
-    :type   => 'backup'
-  )
-  scb.run()
-elsif options[:restore]
-  scb = StellarCoreBackup::Job.new(
-    :config => options[:config],
-    :type   => 'restore'
-  )
+#Tracer.on
+
+if ! options[:type]
+  puts("No operation specified\nExitting\n")
+else
+  scb = StellarCoreBackup::Job.new(options)
   scb.run()
 end
+
+exit
+

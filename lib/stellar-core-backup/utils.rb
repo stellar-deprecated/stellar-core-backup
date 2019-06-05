@@ -60,11 +60,25 @@ module StellarCoreBackup
       return tar_file
     end
 
-    Contract String => nil
-    def restore(backup_archive)
-      @fs_restore.restore(backup_archive)
-      @db_restore.restore()
+    Contract String, String => String
+    def self.verify_hash_file(working_dir)
+      puts 'info: verifying sha256sums file'
+      Dir.chdir(working_dir)
+      `gpg --verify SHA256SUMS.sig SHA256SUMS`
     end
+
+    Contract String, String => String
+    def self.verify_sha_file_content(working_dir)
+      puts 'info: verifying sha256sums file'
+      Dir.chdir(working_dir)
+      `sha256sum --status --strict -c SHA256SUMS`
+    end
+
+#    Contract String => nil
+#    def restore(backup_archive)
+#      @fs_restore.restore(backup_archive)
+#      @db_restore.restore()
+#    end
 
     Contract String => Bool
     def self.cleanup(working_dir)
