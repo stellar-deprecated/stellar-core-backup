@@ -4,7 +4,7 @@ module StellarCoreBackup
     class NoConfig < StandardError ; end
 
     def initialize(**args)
-      if args.has_key?(:config)
+      if args.has_key?(:config) then
         @config       = StellarCoreBackup::Config.new(args[:config])
       else
         puts "info: no config provided"
@@ -14,7 +14,7 @@ module StellarCoreBackup
       @verify = args[:verify] if args.has_key?(:verify)
       @clean  = args[:clean] if args.has_key?(:clean)
 
-      if args.has_key?(:type)
+      if args.has_key?(:type) then
         case args[:type]
           when 'backup'
             puts 'info: backing up stellar-core'
@@ -49,9 +49,21 @@ module StellarCoreBackup
             if stop_core.success then
               @db.backup
               @fs.backup
-              if @verify
-                @hashfiles = StellarCoreBackup::Utils.create_hash_file(@working_dir)
-                @hashsig = StellarCoreBackup::Utils.sign_hash_file(@working_dir)
+              if @verify then
+                create_hash_file = @cmd.run_and_capture('find', ['.', '-type', 'f', '!', '-name', 'SHA256SUMS|', 'xargs', 'sha256sum', '>', 'SHA256SUMS'])
+                if create_hash_file.success then
+                  puts "info: sha sums file created"
+                else
+                  puts 'error: error creating sha sums file'
+                  raise StandardError
+                end
+                sign_hash_file = @cmd.run_and_capture('gpg', ['--detach-sign', 'SHA256SUMS'])
+                if sign_hash_file.success then
+                  puts "info: gpg signature created ok"
+                else
+                  puts 'error: error signing sha256sum file'
+                  raise StandardError
+                end
               end
               # create tar archive with fs, db backup files and if requested the file of shas256sums and corresponding gpg signature.
               @backup = StellarCoreBackup::Utils.create_backup_tar(@working_dir, @backup_dir)
@@ -88,16 +100,28 @@ module StellarCoreBackup
             # using sudo, if running as non root uid then you will need to configure sudoers
             stop_core = @cmd.run_and_capture('sudo', ['/bin/systemctl', 'stop', 'stellar-core'])
             # only proceed if core is stopped and FS is clean
-            if stop_core.success
-              if @clean
-                `rm -fr /var/lib/stellar/buckets/*`
+            if stop_core.success then
+              if @clean then
+                 StellarCoreBackup::Utils.cleanbucket('/var/lib/stellar/buckets')
               end
               if @fs_restore.core_data_dir_empty?() then
                 @backup_archive = @s3.get(@s3.latest)
                 @fs_restore.restore(@backup_archive)
-                if @verify
-                  StellarCoreBackup::Utils.verify_hash_file(@working_dir)
-                  StellarCoreBackup::Utils.verify_sha_file_content(@working_dir)
+                if @verify then
+                  verify_hash_file = @cmd.run_and_capture('gpg', ['--verify', 'SHA256SUMS.sig', 'SHA256SUMS'])
+                  if verify_hash_file.success then
+                    puts "info: gpg signature processed ok"
+                  else
+                    puts 'error: error verifying gpg signature'
+                    raise StandardError
+                  end
+                  verify_sha_file_content = @cmd.run_and_capture('sha256sum', ['--status', '--strict', '-c', 'SHA256SUMS'])
+                  if verify_sha_file_content.success then
+                    puts "info: sha file sums match"
+                  else
+                    puts 'error: error processing sha256sum file'
+                    raise StandardError
+                  end
                 end
                 @db_restore.restore()
               end

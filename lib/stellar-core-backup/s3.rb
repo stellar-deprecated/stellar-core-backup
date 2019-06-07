@@ -37,7 +37,7 @@ module StellarCoreBackup
     # fetches a backup tar file from s3, places in working dir
     def get(file)
       s3_bucket = @config.get('s3_bucket')
-      s3_path = @config.get('s3_path')
+#      s3_path = @config.get('s3_path')
       local_copy = "#{@working_dir}/#{File.basename(file)}"
       begin
         download = @s3_resource.bucket(s3_bucket).object(file)

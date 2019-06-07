@@ -8,30 +8,27 @@ options = { verify: 'V'}
 
 OptionParser.new do |opts|
   opts.banner = "Usage: #{$0} [options]"
-  opts.on("-b", "--backup", "cold backup stellar-core") do |b|
+  opts.on("-b", "--backup", "cold backup stellar-core") do |backup|
     options[:type] = 'backup'
   end
-  opts.on("-c CONFIG", "--config", "configuration file to use") do |c|
-    options[:config] = c
+  opts.on("-c CONFIG", "--config", "configuration file to use") do |config|
+    options[:config] = config
   end
-  opts.on("-l", "--list", "list all backups") do |l|
-    options[:list] = l
+  opts.on("-C", "--clean", "auto-clean buckets directory") do |clean|
+    options[:clean] = 'clean'
   end
-  opts.on("-r", "--restore", "offline restore, uses latest backup") do |r|
+  opts.on("-l", "--list", "list all backups") do |list|
+    options[:list] = 'list'
+  end
+  opts.on("-r", "--restore", "offline restore, uses latest backup") do |restore|
     options[:type] = 'restore'
   end
-  opts.on("-R", "--rm", "auto-clean buckets directory") do |r|
-    options[:clean] = 'R'
-  end
-  opts.on("--no-verify", "Don't PGP sign backed up shasum file or verify restore files integrity (default on)") do |r|
+  opts.on("--no-verify", "Don't PGP sign backed up shasum file or verify restore files integrity (default on)") do |notverify|
     options.delete(:verify)
-  end
-  opts.on("-d", "--debug", "dump debug output") do |r|
-    $debug = 'on'
   end
 end.parse!
 
-if ! options[:type]
+if ! options[:type] then
   puts("No operation specified\nExitting\n")
 else
   scb = StellarCoreBackup::Job.new(options)

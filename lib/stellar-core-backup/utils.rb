@@ -37,20 +37,6 @@ module StellarCoreBackup
     end
 
     Contract String, String => String
-    def self.create_hash_file(working_dir)
-      puts 'info: creating file of backup file hashes'
-      Dir.chdir(working_dir)
-      `find . -type f ! -name SHA256SUMS | xargs sha256sum > SHA256SUMS`
-    end
-
-    Contract String, String => String
-    def self.sign_hash_file(working_dir)
-      puts 'info: signing hash file'
-      Dir.chdir(working_dir)
-      `gpg --detach-sign SHA256SUMS`
-    end
-
-    Contract String, String => String
     def self.create_backup_tar(working_dir, backup_dir)
       puts 'info: creating backup tarball'
       tar_file = "#{backup_dir}/core-backup-#{Time.now.to_i}.tar"
@@ -60,20 +46,6 @@ module StellarCoreBackup
       return tar_file
     end
 
-    Contract String, String => String
-    def self.verify_hash_file(working_dir)
-      puts 'info: verifying sha256sums file'
-      Dir.chdir(working_dir)
-      `gpg --verify SHA256SUMS.sig SHA256SUMS`
-    end
-
-    Contract String, String => String
-    def self.verify_sha_file_content(working_dir)
-      puts 'info: verifying sha256sums file'
-      Dir.chdir(working_dir)
-      `sha256sum --status --strict -c SHA256SUMS`
-    end
-
 #    Contract String => nil
 #    def restore(backup_archive)
 #      @fs_restore.restore(backup_archive)
@@ -81,8 +53,18 @@ module StellarCoreBackup
 #    end
 
     Contract String => Bool
+    def self.cleanbucket(bucket_dir)
+      if FileUtils.remove(Dir.glob(bucket_dir+'/*')) then
+        puts 'info: cleaning up workspace'
+        return true
+      else
+        return false
+      end
+    end
+
+    Contract String => Bool
     def self.cleanup(working_dir)
-      if FileUtils.remove_dir(working_dir)
+      if FileUtils.remove_dir(working_dir) then
         puts 'info: cleaning up workspace'
         return true
       else

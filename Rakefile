@@ -3,7 +3,7 @@ task :build do
 end
 
 task :install => :build do
-#  system "gem install stellar-core-backup-0.0.1.gem"
-  system "sudo gem install stellar-core-backup"
+  system "gem install --local --user-install stellar-core-backup"
+  system "sudo gem install --local stellar-core-backup"
 end
 
