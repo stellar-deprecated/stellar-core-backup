@@ -50,7 +50,7 @@ module StellarCoreBackup
               @db.backup
               @fs.backup
               if @verify then
-                create_hash_file = @cmd.run_and_capture('find', ['.', '-type', 'f', '!', '-name', 'SHA256SUMS|', 'xargs', 'sha256sum', '>', 'SHA256SUMS'])
+                create_hash_file = @cmd.run_and_capture('find', ['.', '-type', 'f', '!', '-name', 'SHA256SUMS', '|', 'xargs', 'sha256sum', '>', 'SHA256SUMS'])
                 if create_hash_file.success then
                   puts "info: sha sums file created"
                 else
