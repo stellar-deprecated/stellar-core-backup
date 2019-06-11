@@ -79,6 +79,29 @@ module StellarCoreBackup
       end
     end
 
+    Contract String, String => Bool
+    def self.confirm_shasums_definitive(working_dir, backup_archive)
+
+      # create an array of filesunpacked into the working_dir
+      Dir.chdir(working_dir)
+      files_present=Dir.glob('./**/*')
+
+      # remove directories and shasum details from file array
+      files_present.delete('./'+File.basename(backup_archive))
+      files_present.delete('./core-db')
+      files_present.delete('./SHA256SUMS')
+      files_present.delete('./SHA256SUMS.sig')
+
+      # now delete the file names in the shasums file from the array
+      # we are expecting an array of zero length after this process
+      File.open("SHA256SUMS").each { |sha_file| files_present.delete(sha_file.split(' ')[1].chomp) }
+      if files_present.none? then
+        return true
+      else
+        return false
+      end
+    end
+
     # check we have read permissions
     Contract String => Bool
     def self.readable?(file)

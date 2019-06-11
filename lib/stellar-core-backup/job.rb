@@ -118,6 +118,12 @@ module StellarCoreBackup
                     puts 'error: error processing sha256sum file'
                     raise StandardError
                   end
+                  if StellarCoreBackup::Utils.confirm_shasums_definitive(@working_dir, @backup_archive) then
+                    puts 'info: SHA256SUMS file list matches delivered archive'
+                  else
+                    puts 'error: unknown additional file(s) detected in archive'
+                    raise StandardError
+                  end
                 end
                 @fs_restore.restore(@backup_archive)
                 @db_restore.restore()
