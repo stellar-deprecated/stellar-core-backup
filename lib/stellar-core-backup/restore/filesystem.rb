@@ -14,10 +14,9 @@ module StellarCoreBackup::Restore
     end
 
     public
+
     Contract String => nil
     def restore(backup_archive)
-      # unpack the backup archive
-      StellarCoreBackup::Tar.unpack(backup_archive, @working_dir)
       # unpack the filesystem backup
       puts "info: stellar-core buckets restored" if StellarCoreBackup::Tar.unpack("#{@working_dir}/core-fs.tar", @core_data_dir)
     end

@@ -46,6 +46,13 @@ module StellarCoreBackup
       return tar_file
     end
 
+    Contract String => nil
+    def extract_backup(backup_archive)
+      # extract the backup archive into the working directory
+      StellarCoreBackup::Tar.unpack(backup_archive, @working_dir)
+      return
+    end
+
 #    Contract String => nil
 #    def restore(backup_archive)
 #      @fs_restore.restore(backup_archive)

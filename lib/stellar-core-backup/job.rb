@@ -90,10 +90,6 @@ module StellarCoreBackup
             puts e
             # clean up working_dir
             StellarCoreBackup::Utils.cleanup(@working_dir)
-            # TODO:
-            # attempt to clear up after ourselves
-            # remove working_dir
-            # restart stellar-core
           end
         when 'restore'
           begin
@@ -102,11 +98,11 @@ module StellarCoreBackup
             # only proceed if core is stopped and FS is clean
             if stop_core.success then
               if @clean then
-                 StellarCoreBackup::Utils.cleanbucket('/var/lib/stellar/buckets')
+                 StellarCoreBackup::Utils.cleanbucket(@fs_restore.core_data_dir)
               end
               if @fs_restore.core_data_dir_empty?() then
                 @backup_archive = @s3.get(@s3.latest)
-                @fs_restore.restore(@backup_archive)
+                @utils.extract_backup(@backup_archive)
                 if @verify then
                   verify_hash_file = @cmd.run_and_capture('gpg', ['--verify', 'SHA256SUMS.sig', 'SHA256SUMS'])
                   if verify_hash_file.success then
@@ -123,7 +119,19 @@ module StellarCoreBackup
                     raise StandardError
                   end
                 end
+                @fs_restore.restore(@backup_archive)
                 @db_restore.restore()
+
+                # restart stellar-core post restore
+                puts 'info: starting stellar-core'
+                # using sudo, if running as non root uid then you will need to configure sudoers
+                start_core = @cmd.run_and_capture('sudo', ['/bin/systemctl', 'start', 'stellar-core'])
+                if start_core.success then
+                  puts "info: stellar-core started"
+                else
+                  puts 'error: can not start stellar-core'
+                  raise StandardError
+                end
               end
             else
               puts 'error: can not stop stellar-core'
@@ -136,10 +144,6 @@ module StellarCoreBackup
             puts e
             # clean up working_dir
             StellarCoreBackup::Utils.cleanup(@working_dir)
-            # TODO:
-            # attempt to clear up after ourselves
-            # remove working_dir
-            # restart stellar-core
           end
       end
     end
