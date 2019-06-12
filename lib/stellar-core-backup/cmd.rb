@@ -10,7 +10,7 @@ module StellarCoreBackup
     Contract String, ArrayOf[String] => CmdResult
     def run_and_capture(cmd, args)
       Dir.chdir @working_dir do
-        stringArgs = args.map{|x| "'#{x}'"}.join(" ")
+        stringArgs = args.map{|x| "#{x}"}.join(" ")
         out = `#{cmd} #{stringArgs}`
         CmdResult.new($?.exitstatus == 0, out)
       end

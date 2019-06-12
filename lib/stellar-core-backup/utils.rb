@@ -47,15 +47,55 @@ module StellarCoreBackup
     end
 
     Contract String => nil
-    def restore(backup_archive)
-      @fs_restore.restore(backup_archive)
-      @db_restore.restore()
+    def extract_backup(backup_archive)
+      # extract the backup archive into the working directory
+      StellarCoreBackup::Tar.unpack(backup_archive, @working_dir)
+      return
+    end
+
+#    Contract String => nil
+#    def restore(backup_archive)
+#      @fs_restore.restore(backup_archive)
+#      @db_restore.restore()
+#    end
+
+    Contract String => Bool
+    def self.cleanbucket(bucket_dir)
+      if FileUtils.remove(Dir.glob(bucket_dir+'/*')) then
+        puts 'info: cleaning up workspace'
+        return true
+      else
+        return false
+      end
     end
 
     Contract String => Bool
     def self.cleanup(working_dir)
-      if FileUtils.remove_dir(working_dir)
+      if FileUtils.remove_dir(working_dir) then
         puts 'info: cleaning up workspace'
+        return true
+      else
+        return false
+      end
+    end
+
+    Contract String, String => Bool
+    def self.confirm_shasums_definitive(working_dir, backup_archive)
+
+      # create an array of filesunpacked into the working_dir
+      Dir.chdir(working_dir)
+      files_present=Dir.glob('./**/*')
+
+      # remove directories and shasum details from file array
+      files_present.delete('./'+File.basename(backup_archive))
+      files_present.delete('./core-db')
+      files_present.delete('./SHA256SUMS')
+      files_present.delete('./SHA256SUMS.sig')
+
+      # now delete the file names in the shasums file from the array
+      # we are expecting an array of zero length after this process
+      File.open("SHA256SUMS").each { |sha_file| files_present.delete(sha_file.split(' ')[1].chomp) }
+      if files_present.none? then
         return true
       else
         return false
