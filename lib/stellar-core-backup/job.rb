@@ -18,22 +18,25 @@ module StellarCoreBackup
         case args[:type]
           when 'backup'
             puts 'info: backing up stellar-core'
-            @working_dir  = StellarCoreBackup::Utils.create_working_dir(@config.get('working_dir'))
-            @backup_dir   = StellarCoreBackup::Utils.create_backup_dir(@config.get('backup_dir'))
-            @cmd          = StellarCoreBackup::Cmd.new(@working_dir)
-            @db           = StellarCoreBackup::Database.new(@config)
-            @fs           = StellarCoreBackup::Filesystem.new(@config)
-            @s3           = StellarCoreBackup::S3.new(@config)
-            @job_type     = args[:type]
+            @working_dir    = StellarCoreBackup::Utils.create_working_dir(@config.get('working_dir'))
+            @backup_dir     = StellarCoreBackup::Utils.create_backup_dir(@config.get('backup_dir'))
+            @signing_gpg_key     = StellarCoreBackup::Utils.create_backup_dir(@config.get('signing_gpg_key'))
+            @signing_gpg_pass = StellarCoreBackup::Utils.create_backup_dir(@config.get('signing_gpg_pass'))
+            @cmd            = StellarCoreBackup::Cmd.new(@working_dir)
+            @db             = StellarCoreBackup::Database.new(@config)
+            @fs             = StellarCoreBackup::Filesystem.new(@config)
+            @s3             = StellarCoreBackup::S3.new(@config)
+            @job_type       = args[:type]
           when 'restore'
             puts 'info: restoring stellar-core'
-            @working_dir  = StellarCoreBackup::Utils.create_working_dir(@config.get('working_dir'))
-            @cmd          = StellarCoreBackup::Cmd.new(@working_dir)
-            @db_restore   = StellarCoreBackup::Restore::Database.new(@config)
-            @fs_restore   = StellarCoreBackup::Restore::Filesystem.new(@config)
-            @s3           = StellarCoreBackup::S3.new(@config)
-            @utils        = StellarCoreBackup::Utils.new(@config)
-            @job_type     = args[:type]
+            @working_dir       = StellarCoreBackup::Utils.create_working_dir(@config.get('working_dir'))
+            @verifying_gpg_key = StellarCoreBackup::Utils.create_backup_dir(@config.get('verifying_gpg_key'))
+            @cmd               = StellarCoreBackup::Cmd.new(@working_dir)
+            @db_restore        = StellarCoreBackup::Restore::Database.new(@config)
+            @fs_restore        = StellarCoreBackup::Restore::Filesystem.new(@config)
+            @s3                = StellarCoreBackup::S3.new(@config)
+            @utils             = StellarCoreBackup::Utils.new(@config)
+            @job_type          = args[:type]
         end
       end
     end
@@ -57,7 +60,7 @@ module StellarCoreBackup
                   puts 'error: error creating sha sums file'
                   raise StandardError
                 end
-                sign_hash_file = @cmd.run_and_capture('gpg', ['--detach-sign', 'SHA256SUMS'])
+                sign_hash_file = @cmd.run_and_capture('echo', [@signing_gpg_pass, '|', 'gpg', '--pinentry-mode', 'loopback', '--passphrase-fd', '0', '--local-user', @signing_gpg_key, '--detach-sign', 'SHA256SUMS'])
                 if sign_hash_file.success then
                   puts "info: gpg signature created ok"
                 else
@@ -104,7 +107,7 @@ module StellarCoreBackup
                 @backup_archive = @s3.get(@s3.latest)
                 @utils.extract_backup(@backup_archive)
                 if @verify then
-                  verify_hash_file = @cmd.run_and_capture('gpg', ['--verify', 'SHA256SUMS.sig', 'SHA256SUMS'])
+                  verify_hash_file = @cmd.run_and_capture('gpg', ['--local-user', @verifying_gpg_key, '--verify', 'SHA256SUMS.sig', 'SHA256SUMS'])
                   if verify_hash_file.success then
                     puts "info: gpg signature processed ok"
                   else
