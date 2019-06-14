@@ -21,6 +21,8 @@ $ cat ~/.gnupg/gpg-agent.conf
 allow-loopback-pinentry
 ```
 
+It is safest to then restart the gpg-agent if one is running for this config item to take effect.
+
 The appropriate GPG signing keys also need to be in place. The public Stellar Backup key is available from here -
 
 * Add key location!
