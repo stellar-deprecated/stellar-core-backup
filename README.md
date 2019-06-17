@@ -12,24 +12,19 @@ AWS credentials can be exported as environment variables or permissions can be g
 
 ## GPG Backup Signing and Verification
 
-Unless the user disables GPG signing and verification using the --no-verify flag, then the gpg checks will be run. The key details are loaded into the config file.
+GPG verificaiton is enabled by default. Unless the user disables this securtiy feature with the --no-verify option, GPG signing and verification checks will be run.
 
-In order for automated gpg signing to work, there needs to be a ~/.gnupg/gpg-agent file with a configuration option allowing pinentry-loopback
+The appropriate GPG signing keys need to be in place and the key_id selection is configured in the configuration file.
 
-```
-$ cat ~/.gnupg/gpg-agent.conf
-allow-loopback-pinentry
-```
+To install the public Stellar backup key for verification of Stellar provided backups, used the --getkey flag and the provided key-ID contained in the config/sample.yaml file. Change this value for your own key.
 
-It is safest to then restart the gpg-agent if one is running for this config item to take effect.
+`stellar-core-backup --getkey`
 
-The appropriate GPG signing keys also need to be in place. The public Stellar Backup key is available from here -
+The keyservers used to serve this key from belong to the SKS Keyserver service cluster hkp://pool.sks-keyservers.net. 
 
-* Add key location!
+If you try to verify a backup that has not been signed, you will generate an error.
 
-If you try to verify a backup that has not been signed, you will generate an error
-
-`gpg: can't open 'SHA256SUMS.sig': No such file or directory` 
+`gpg: can't open 'SHA256SUMS.sig': No such file or directory`.
 
 ## Configuration
 
@@ -37,26 +32,30 @@ If you try to verify a backup that has not been signed, you will generate an err
 |--------------|-------------|
 |working_dir| Path to working directory which will hold temporary files, needs sufficient space to store and untar 1 backup|
 |core_config| Path to stellar-core configuration file of the node we are backing up, retrieves database credentials, etc.|
-|backup_dir| Path to directory which will hold the final backup|
 |s3_bucket| S3 bucket to store/retrieve buckets to/from|
 |s3_path| S3 Path prefix, can be used for backing up multiple core nodes to the same bucket|
-|verifying_gpg_key| If you wish to verify the Stellar provided backups, leave this as backtups@stellar.org|
-|signing_gpg_key| This option is only used when signing your own backups, Stellar signs our backups with backups@stellar.org|
-|signing_gpg_pass| 'Your GPG Key Passphrase For Your Signing GPG Key!'|
+|gpg_key| GPG key ID used for signing and verification of the stellar-core backups. The provided ID is the Stellar signing key|
 
 ## Usage As Command Line Tool
 
-##### backup but don't shasum the backup files or gpg sing the SHA256SUMS file
+##### backup and shasum the backup files then gpg sign the resulting SHA256SUMS file
 
 ```
-stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --backup --no-verify
+stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --backup
 ```
 
-##### restore latest backup, gpg verify active by default
+##### restore latest backup
 
 ```
-# Use --clean to removal redundant bucket data
+# Use --clean to remove redundant bucket data
 stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --restore --clean
+```
+
+##### restore latest backup without gpg verification
+
+```
+# Use --clean to remove redundant bucket data
+stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --restore --clean --no-verify
 ```
 
 ## Usage as a Library

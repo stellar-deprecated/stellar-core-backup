@@ -17,13 +17,16 @@ OptionParser.new do |opts|
   opts.on("-C", "--clean", "auto-clean buckets directory") do |clean|
     options[:clean] = 'clean'
   end
+  opts.on("-g", "--getkey", "load or update the configured public GPG key") do |getkey|
+    options[:type] = 'getkey'
+  end
   opts.on("-l", "--list", "list all backups") do |list|
     options[:list] = 'list'
   end
   opts.on("-r", "--restore", "offline restore, uses latest backup") do |restore|
     options[:type] = 'restore'
   end
-  opts.on("--no-verify", "Don't PGP sign backed up shasum file or verify restore files integrity (default on)") do |notverify|
+  opts.on("--no-verify", "don't PGP sign backed up shasum file or verify restore files integrity (default on)") do |notverify|
     options.delete(:verify)
   end
 end.parse!
