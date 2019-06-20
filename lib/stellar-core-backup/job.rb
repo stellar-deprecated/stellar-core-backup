@@ -101,51 +101,51 @@ module StellarCoreBackup
           end
         when 'restore'
           begin
+            # confirm the bucket directory is set to be cleaned or is clean
+            if ! @clean then
+              @fs_restore.core_data_dir_empty?()
+            end
             # using sudo, if running as non root uid then you will need to configure sudoers
             stop_core = @cmd.run_and_capture('sudo', ['/bin/systemctl', 'stop', 'stellar-core'])
             # only proceed if core is stopped and FS is clean
             if stop_core.success then
-              if @clean then
-                 StellarCoreBackup::Utils.cleanbucket(@fs_restore.core_data_dir)
-              end
-              if @fs_restore.core_data_dir_empty?() then
-                @backup_archive = @s3.get(@s3.latest)
-                @utils.extract_backup(@backup_archive)
-                if @verify then
-                  verify_hash_file = @cmd.run_and_capture('gpg', ['--local-user', @gpg_key, '--verify', 'SHA256SUMS.sig', 'SHA256SUMS', '2>&1'])
-                  if verify_hash_file.success then
-                    puts "info: gpg signature processed ok"
-                  else
-                    puts 'error: error verifying gpg signature'
-                    raise StandardError
-                  end
-                  verify_sha_file_content = @cmd.run_and_capture('sha256sum', ['--status', '--strict', '-c', 'SHA256SUMS'])
-                  if verify_sha_file_content.success then
-                    puts "info: sha file sums match"
-                  else
-                    puts 'error: error processing sha256sum file'
-                    raise StandardError
-                  end
-                  if StellarCoreBackup::Utils.confirm_shasums_definitive(@working_dir, @backup_archive) then
-                    puts 'info: SHA256SUMS file list matches delivered archive'
-                  else
-                    puts 'error: unknown additional file(s) detected in archive'
-                    raise StandardError
-                  end
-                end
-                @fs_restore.restore(@backup_archive)
-                @db_restore.restore()
-
-                # restart stellar-core post restore
-                puts 'info: starting stellar-core'
-                # using sudo, if running as non root uid then you will need to configure sudoers
-                start_core = @cmd.run_and_capture('sudo', ['/bin/systemctl', 'start', 'stellar-core'])
-                if start_core.success then
-                  puts "info: stellar-core started"
+              @backup_archive = @s3.get(@s3.latest)
+              @utils.extract_backup(@backup_archive)
+              if @verify then
+                verify_hash_file = @cmd.run_and_capture('gpg', ['--local-user', @gpg_key, '--verify', 'SHA256SUMS.sig', 'SHA256SUMS', '2>&1'])
+                if verify_hash_file.success then
+                  puts "info: gpg signature processed ok"
                 else
-                  puts 'error: can not start stellar-core'
+                  puts 'error: error verifying gpg signature'
                   raise StandardError
                 end
+                verify_sha_file_content = @cmd.run_and_capture('sha256sum', ['--status', '--strict', '-c', 'SHA256SUMS'])
+                if verify_sha_file_content.success then
+                  puts "info: sha file sums match"
+                else
+                  puts 'error: error processing sha256sum file'
+                  raise StandardError
+                end
+                if StellarCoreBackup::Utils.confirm_shasums_definitive(@working_dir, @backup_archive) then
+                  puts 'info: SHA256SUMS file list matches delivered archive'
+                else
+                  puts 'error: unknown additional file(s) detected in archive'
+                  raise StandardError
+                end
+              end
+              StellarCoreBackup::Utils.cleanbucket(@fs_restore.core_data_dir)
+              @fs_restore.restore(@backup_archive)
+              @db_restore.restore()
+
+              # restart stellar-core post restore
+              puts 'info: starting stellar-core'
+              # using sudo, if running as non root uid then you will need to configure sudoers
+              start_core = @cmd.run_and_capture('sudo', ['/bin/systemctl', 'start', 'stellar-core'])
+              if start_core.success then
+                puts "info: stellar-core started"
+              else
+                puts 'error: can not start stellar-core'
+                raise StandardError
               end
             else
               puts 'error: can not stop stellar-core'
