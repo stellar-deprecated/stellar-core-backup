@@ -14,32 +14,40 @@ module StellarCoreBackup
       @verify = args[:verify] if args.has_key?(:verify)
       @clean  = args[:clean] if args.has_key?(:clean)
 
+      @job_type     = args[:type]
+      @gpg_key      = @config.get('gpg_key')
+      @working_dir  = StellarCoreBackup::Utils.create_working_dir(@config.get('working_dir'))
+      @cmd          = StellarCoreBackup::Cmd.new(@working_dir)
+
       if args.has_key?(:type) then
         case args[:type]
           when 'backup'
             puts 'info: backing up stellar-core'
-            @working_dir  = StellarCoreBackup::Utils.create_working_dir(@config.get('working_dir'))
             @backup_dir   = StellarCoreBackup::Utils.create_backup_dir(@config.get('backup_dir'))
-            @cmd          = StellarCoreBackup::Cmd.new(@working_dir)
             @db           = StellarCoreBackup::Database.new(@config)
             @fs           = StellarCoreBackup::Filesystem.new(@config)
             @s3           = StellarCoreBackup::S3.new(@config)
-            @job_type     = args[:type]
           when 'restore'
             puts 'info: restoring stellar-core'
-            @working_dir  = StellarCoreBackup::Utils.create_working_dir(@config.get('working_dir'))
-            @cmd          = StellarCoreBackup::Cmd.new(@working_dir)
             @db_restore   = StellarCoreBackup::Restore::Database.new(@config)
             @fs_restore   = StellarCoreBackup::Restore::Filesystem.new(@config)
             @s3           = StellarCoreBackup::S3.new(@config)
             @utils        = StellarCoreBackup::Utils.new(@config)
-            @job_type     = args[:type]
+          when 'getkey'
+            puts 'info: confirming public gpg key with key server'
         end
       end
     end
 
     def run()
       case @job_type
+        when 'getkey'
+          begin
+            puts "info: installing gpg public key"
+            @cmd.run_and_capture('gpg', ['--keyserver', 'hkp://pool.sks-keyservers.net', '--recv-key', @gpg_key, '2>&1'])
+          rescue => e
+            puts e
+          end
         when 'backup'
           begin
             puts 'info: stopping stellar-core'
@@ -57,7 +65,7 @@ module StellarCoreBackup
                   puts 'error: error creating sha sums file'
                   raise StandardError
                 end
-                sign_hash_file = @cmd.run_and_capture('gpg', ['--detach-sign', 'SHA256SUMS'])
+                sign_hash_file = @cmd.run_and_capture('gpg', ['--local-user', @gpg_key, '--detach-sign', 'SHA256SUMS'])
                 if sign_hash_file.success then
                   puts "info: gpg signature created ok"
                 else
@@ -104,7 +112,7 @@ module StellarCoreBackup
                 @backup_archive = @s3.get(@s3.latest)
                 @utils.extract_backup(@backup_archive)
                 if @verify then
-                  verify_hash_file = @cmd.run_and_capture('gpg', ['--verify', 'SHA256SUMS.sig', 'SHA256SUMS'])
+                  verify_hash_file = @cmd.run_and_capture('gpg', ['--local-user', @gpg_key, '--verify', 'SHA256SUMS.sig', 'SHA256SUMS', '2>&1'])
                   if verify_hash_file.success then
                     puts "info: gpg signature processed ok"
                   else

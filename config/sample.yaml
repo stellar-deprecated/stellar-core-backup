@@ -3,3 +3,4 @@ core_config: /etc/stellar/stellar-core.cfg
 backup_dir: /var/lib/stellar/backups
 s3_bucket: stellar002-core-backups
 s3_path: testnet
+gpg_key: 'ED84A59659203682'
