@@ -44,7 +44,12 @@ module StellarCoreBackup
         when 'getkey'
           begin
             puts "info: installing gpg public key"
-            @cmd.run_and_capture('gpg', ['--keyserver', 'hkp://pool.sks-keyservers.net', '--recv-key', @gpg_key, '2>&1'])
+            getkey = @cmd.run_and_capture('gpg', ['--keyserver', 'hkp://ipv4.pool.sks-keyservers.net', '--recv-key', @gpg_key, '2>&1'])
+            if ! getkey.success then
+              puts "error: failed to get gpg key"
+              puts "#{getkey.out}"
+              raise StandardError
+            end
           rescue => e
             puts e
           end
