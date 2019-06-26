@@ -133,7 +133,7 @@ module StellarCoreBackup
                   raise StandardError
                 end
               end
-              StellarCoreBackup::Utils.cleanbucket(@fs_restore.core_data_dir)
+              StellarCoreBackup::Utils.cleanbucket(@fs_restore.core_data_dir) if @clean
               @fs_restore.restore(@backup_archive)
               @db_restore.restore()
 
