@@ -40,7 +40,7 @@ module StellarCoreBackup
           when 'getkey'
             puts 'info: confirming public gpg key with key server'
           when 'list'
-            puts "info: listing latest #{@listlen} stellar-core backups"
+            puts "info: listing last #{@listlen} stellar-core backups"
         end
       end
     end
