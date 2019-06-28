@@ -25,6 +25,7 @@ We are using SKS Keyservers for public key distribution available at hkp://pool.
 |working_dir| Path to working directory which will hold temporary files, needs sufficient space to store and untar 1 backup|
 |core_config| Path to stellar-core configuration file of the node we are backing up, retrieves database credentials, etc.|
 |backup_dir| Path to directory which will hold the final backup|
+|s3_region| S3 region|
 |s3_bucket| S3 bucket to store/retrieve buckets to/from|
 |s3_path| S3 Path prefix, can be used for backing up multiple core nodes to the same bucket|
 |gpg_key| GPG key ID used for signing and verification of the stellar-core backups. The provided ID is the Stellar public key|
@@ -47,6 +48,18 @@ stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --backup
 
 ```
 stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --restore --clean
+```
+
+##### list arbitrary number of backups in S3 bucket
+
+```
+stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --list [num]
+```
+
+##### restore from selected backup file with auto-clean
+
+```
+stellar-core-backup --config /etc/stellar/stellar-core-backup.conf --restore --clean --select [bucket-prefix/core-backup-name]
 ```
 
 ## Usage as a Library
