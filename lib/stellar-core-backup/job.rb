@@ -101,7 +101,7 @@ module StellarCoreBackup
               raise StandardError
             end
 
-            # restart stellar-core post backup-
+            # restart stellar-core post backup
             puts 'info: starting stellar-core'
             # using sudo, if running as non root uid then you will need to configure sudoers
             start_core = @cmd.run_and_capture('sudo', ['/bin/systemctl', 'start', 'stellar-core'])

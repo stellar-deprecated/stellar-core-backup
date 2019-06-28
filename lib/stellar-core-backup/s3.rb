@@ -6,14 +6,14 @@ module StellarCoreBackup
 
     Contract StellarCoreBackup::Config => Contracts::Any
     def initialize(config)
-      @config = config
+      @config       = config
       @working_dir  = StellarCoreBackup::Utils.create_working_dir(@config.get('working_dir'))
-      @s3_bucket = @config.get('s3_bucket')
-      @s3_path = @config.get('s3_path')
+      @s3_region    = @config.get('s3_region')
+      @s3_bucket    = @config.get('s3_bucket')
+      @s3_path      = @config.get('s3_path')
       begin
-        # TODO: move region to configuration file ?
-        @s3_client = Aws::S3::Client.new(region: 'us-east-1')
-        @s3_resource = Aws::S3::Resource.new(client: @s3_client)
+        @s3_client    = Aws::S3::Client.new(region: @s3_region)
+        @s3_resource  = Aws::S3::Resource.new(client: @s3_client)
       rescue Aws::S3::Errors::ServiceError => e
         puts "info: error connecting to s3"
         puts e
@@ -50,11 +50,6 @@ module StellarCoreBackup
         puts e
       end
     end
-
-    # fetch list of all s3 objects, sort and return latest/last
-#    def latest(listlen)
-#      @s3_client.list_objects_v2({bucket: @s3_bucket, prefix: @s3_path+'/core-backup-'}).contents.map{|o| o.key}.sort{|a,b| a.gsub(/(\d+)/,'\1') <=> b.gsub(/(\d+)/,'\1')}.last(listlen)
-#    end
 
     def latest(listlen)
       begin

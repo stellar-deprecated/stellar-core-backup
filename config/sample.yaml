@@ -1,6 +1,7 @@
 working_dir: /mnt/xvdf
 core_config: /etc/stellar/stellar-core.cfg
 backup_dir: /var/lib/stellar/backups
+s3_region: us-east-1
 s3_bucket: stellar002-core-backups
 s3_path: testnet
 gpg_key: 'D99E1D15ACC358AB'
