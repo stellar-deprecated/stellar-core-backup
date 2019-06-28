@@ -11,14 +11,20 @@ module StellarCoreBackup
         raise NoConfig
       end
 
-      @verify = args[:verify] if args.has_key?(:verify)
-      @clean  = args[:clean] if args.has_key?(:clean)
+      # Set run time options
+      @verify   = args[:verify] if args.has_key?(:verify)
+      @clean    = args[:clean] if args.has_key?(:clean)
+      @listlen  = args[:listlen]
 
+      # Set common run time parameters
       @job_type     = args[:type]
       @gpg_key      = @config.get('gpg_key')
       @working_dir  = StellarCoreBackup::Utils.create_working_dir(@config.get('working_dir'))
       @cmd          = StellarCoreBackup::Cmd.new(@working_dir)
+      @select       = args[:select] if args.has_key?(:select)
+      @s3           = StellarCoreBackup::S3.new(@config)
 
+      # Set per operation type run time parameters
       if args.has_key?(:type) then
         case args[:type]
           when 'backup'
@@ -26,15 +32,15 @@ module StellarCoreBackup
             @backup_dir   = StellarCoreBackup::Utils.create_backup_dir(@config.get('backup_dir'))
             @db           = StellarCoreBackup::Database.new(@config)
             @fs           = StellarCoreBackup::Filesystem.new(@config)
-            @s3           = StellarCoreBackup::S3.new(@config)
           when 'restore'
             puts 'info: restoring stellar-core'
             @db_restore   = StellarCoreBackup::Restore::Database.new(@config)
             @fs_restore   = StellarCoreBackup::Restore::Filesystem.new(@config)
-            @s3           = StellarCoreBackup::S3.new(@config)
             @utils        = StellarCoreBackup::Utils.new(@config)
           when 'getkey'
             puts 'info: confirming public gpg key with key server'
+          when 'list'
+            puts "info: listing latest #{@listlen} stellar-core backups"
         end
       end
     end
@@ -51,6 +57,14 @@ module StellarCoreBackup
               puts "#{getkey.out}"
               raise StandardError
             end
+          rescue => e
+            puts e
+          end
+        when 'list'
+          begin
+            list=@s3.latest(@listlen)
+            puts "info: only #{list.length} backup files in bucket" if list.length < @listlen
+            puts list
           rescue => e
             puts e
           end
@@ -87,7 +101,7 @@ module StellarCoreBackup
               raise StandardError
             end
 
-            # restart stellar-core post backup
+            # restart stellar-core post backup-
             puts 'info: starting stellar-core'
             # using sudo, if running as non root uid then you will need to configure sudoers
             start_core = @cmd.run_and_capture('sudo', ['/bin/systemctl', 'start', 'stellar-core'])
@@ -115,7 +129,10 @@ module StellarCoreBackup
             stop_core = @cmd.run_and_capture('sudo', ['/bin/systemctl', 'stop', 'stellar-core'])
             # only proceed if core is stopped and FS is clean
             if stop_core.success then
-              @backup_archive = @s3.get(@s3.latest)
+              # if no manual selection has been made, use the latest
+              @select=@s3.latest(1) if ! @select
+              puts @select
+              @backup_archive = @s3.get(@select[0])
               @utils.extract_backup(@backup_archive)
               if @verify then
                 verify_hash_file = @cmd.run_and_capture('gpg', ['--local-user', @gpg_key, '--verify', 'SHA256SUMS.sig', 'SHA256SUMS', '2>&1'])

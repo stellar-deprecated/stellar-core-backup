@@ -4,7 +4,7 @@ require 'stellar-core-backup'
 require 'optparse'
 
 
-options = { verify: 'V'}
+options = { listlen: 1, verify: 'V'}
 
 OptionParser.new do |opts|
   opts.banner = "Usage: #{$0} [options]"
@@ -20,11 +20,15 @@ OptionParser.new do |opts|
   opts.on("-g", "--getkey", "load or update the configured public GPG key") do |getkey|
     options[:type] = 'getkey'
   end
-  opts.on("-l", "--list", "list all backups") do |list|
-    options[:list] = 'list'
+    opts.on("-l", "--list [NUM]", Numeric, "list latest backup or display NUM backups") do |list|
+    options[:type] = 'list'
+    options[:listlen] = list if list
   end
   opts.on("-r", "--restore", "offline restore, uses latest backup") do |restore|
     options[:type] = 'restore'
+  end
+  opts.on("-s", "--select backup_file", "select archive for point in time restore") do |select|
+    options[:select] = select
   end
   opts.on("--no-verify", "don't PGP sign backed up shasum file or verify restore files integrity (default on)") do |notverify|
     options.delete(:verify)
@@ -32,7 +36,10 @@ OptionParser.new do |opts|
 end.parse!
 
 if ! options[:type] then
-  puts("No operation specified\nExitting\n")
+  puts "error: no operation specified; exitting\n"
+#elsif options[:type] then
+#  puts options[:type], options[:type].length
+#  puts "error: Cannot mix operation types #{options[:type]}\n"
 else
   scb = StellarCoreBackup::Job.new(options)
   scb.run()
