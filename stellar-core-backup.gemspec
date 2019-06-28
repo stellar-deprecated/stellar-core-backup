@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Tom Llewellyn-Smith"]
   spec.email         = ["tom@stellar.org"]
   spec.summary       = %q{A helper script to backup a stellar-core node}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/stellar/stellar-core-backup"
   spec.license       = "Apache-2.0"
 
   spec.files         = `git ls-files -z`.split("\x0")

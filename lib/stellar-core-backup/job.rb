@@ -121,18 +121,19 @@ module StellarCoreBackup
           end
         when 'restore'
           begin
-            # confirm the bucket directory is set to be cleaned or is clean
+            # confirm the bucket directory is set to be cleaned or is empty
+            # the fs_restore.core_data_dir_empty? throws an exception if it's not empty
             if ! @clean then
               @fs_restore.core_data_dir_empty?()
             end
             # using sudo, if running as non root uid then you will need to configure sudoers
             stop_core = @cmd.run_and_capture('sudo', ['/bin/systemctl', 'stop', 'stellar-core'])
-            # only proceed if core is stopped and FS is clean
+            # only proceed if core is stopped
             if stop_core.success then
-              # if no manual selection has been made, use the latest
-              @select=@s3.latest(1) if ! @select
-              puts @select
-              @backup_archive = @s3.get(@select[0])
+              # if no manual selection has been made, use the latest as derived from the s3.latest method
+              # this method returns an array so set @select to the first and only element
+              @select=@s3.latest(1)[0] if ! @select
+              @backup_archive = @s3.get(@select)
               @utils.extract_backup(@backup_archive)
               if @verify then
                 verify_hash_file = @cmd.run_and_capture('gpg', ['--local-user', @gpg_key, '--verify', 'SHA256SUMS.sig', 'SHA256SUMS', '2>&1'])

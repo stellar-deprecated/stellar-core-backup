@@ -52,14 +52,13 @@ module StellarCoreBackup
     end
 
     # fetch list of all s3 objects, sort and return latest/last
-    def latest(listlen)
-      @s3_client.list_objects_v2({bucket: @s3_bucket, prefix: @s3_path+'/core-backup-'}).contents.map{|o| o.key}.sort{|a,b| a.gsub(/(\d+)/,'\1') <=> b.gsub(/(\d+)/,'\1')}.last(listlen)
-    end
+#    def latest(listlen)
+#      @s3_client.list_objects_v2({bucket: @s3_bucket, prefix: @s3_path+'/core-backup-'}).contents.map{|o| o.key}.sort{|a,b| a.gsub(/(\d+)/,'\1') <=> b.gsub(/(\d+)/,'\1')}.last(listlen)
+#    end
 
-    def list(listlen)
+    def latest(listlen)
       begin
         @s3_client.list_objects_v2({bucket: @s3_bucket, prefix: @s3_path+'/core-backup-'}).contents.map{|o| o.key}.sort{|a,b| a.gsub(/(\d+)/,'\1') <=> b.gsub(/(\d+)/,'\1')}.last(listlen)
-#        puts list
       rescue Aws::S3::Errors::ServiceError => e
         puts "info: error listing s3 (#{@s3_bucket})"
         puts e
