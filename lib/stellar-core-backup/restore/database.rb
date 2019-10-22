@@ -24,7 +24,7 @@ module StellarCoreBackup::Restore
     Contract nil => Bool
     def pg_restore()
       # we are restoring to public schema
-      pg_restore = @cmd.run('pg_restore', ['-n', 'public', '-c', '-d', @dbname, 'core-db/'])
+      pg_restore = @cmd.run('pg_restore', ['-n', 'public', '--jobs', "#{StellarCoreBackup::Utils.num_cores?()}", '-c', '-d', @dbname, 'core-db/'])
       if pg_restore.success then
         return true
       else

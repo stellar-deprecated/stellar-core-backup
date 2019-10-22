@@ -126,5 +126,12 @@ module StellarCoreBackup
       end
     end
 
+    # return number of available cores
+    Contract nil => Integer
+    def self.num_cores?()
+      require 'etc'
+      return Etc.nprocessors
+    end
+
   end
 end
