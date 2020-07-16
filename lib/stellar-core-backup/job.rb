@@ -30,13 +30,13 @@ module StellarCoreBackup
         case args[:type]
           when 'backup'
             puts 'info: backing up stellar-core'
-            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_start_time')
+            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_start_time')
             @backup_dir   = StellarCoreBackup::Utils.create_backup_dir(@config.get('backup_dir'))
             @db           = StellarCoreBackup::Database.new(@config)
             @fs           = StellarCoreBackup::Filesystem.new(@config)
           when 'restore'
             puts 'info: restoring stellar-core'
-            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_start_time')
+            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_start_time')
             @db_restore   = StellarCoreBackup::Restore::Database.new(@config)
             @fs_restore   = StellarCoreBackup::Restore::Filesystem.new(@config)
             @utils        = StellarCoreBackup::Utils.new(@config)
@@ -82,14 +82,14 @@ module StellarCoreBackup
             stop_core = @cmd.run_and_capture('sudo', ['/bin/systemctl', 'stop', 'stellar-core'])
             # only proceed if core is stopped
             if stop_core.success then
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_db_dump_start_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_db_dump_start_time')
               @db.backup
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_db_dump_finish_time')
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_fs_backup_start_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_db_dump_finish_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_fs_backup_start_time')
               @fs.backup
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_fs_backup_finish_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_fs_backup_finish_time')
               if @verify then
-                StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_verify_start_time')
+                StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_verify_start_time')
                 create_hash_file = @cmd.run_and_capture('find', ['.', '-type', 'f', '!', '-name', 'SHA256SUMS', '|', 'xargs', 'sha256sum', '>', 'SHA256SUMS'])
                 if create_hash_file.success then
                   puts "info: sha sums file created"
@@ -100,19 +100,19 @@ module StellarCoreBackup
                 sign_hash_file = @cmd.run_and_capture('gpg', ['--local-user', @gpg_key, '--detach-sign', 'SHA256SUMS'])
                 if sign_hash_file.success then
                   puts "info: gpg signature created ok"
-                  StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_verify_finish_time')
+                  StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_verify_finish_time')
                 else
                   puts 'error: error signing sha256sum file'
                   raise StandardError
                 end
               end
               # create tar archive with fs, db backup files and if requested the file of shas256sums and corresponding gpg signature.
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_tar_start_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_tar_start_time')
               @backup = StellarCoreBackup::Utils.create_backup_tar(@working_dir, @backup_dir)
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_tar_finish_time')
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_s3_push_start_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_tar_finish_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_s3_push_start_time')
               @s3.push(@backup)
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_s3_push_finish_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_s3_push_finish_time')
             else
               puts 'error: can not stop stellar-core'
               raise StandardError
@@ -135,9 +135,9 @@ module StellarCoreBackup
             puts e
             # clean up working_dir
             StellarCoreBackup::Utils.cleanup(@working_dir)
-            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_fail_time')
+            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_fail_time')
           else
-            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'backup_success_time')
+            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_backup_success_time')
           end
         when 'restore'
           begin
@@ -153,14 +153,14 @@ module StellarCoreBackup
               # if no manual selection has been made, use the latest as derived from the s3.latest method
               # this method returns an array so set @select to the first and only element
               @select=@s3.latest(1)[0] if ! @select
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_s3_get_start_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_s3_get_start_time')
               @backup_archive = @s3.get(@select)
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_s3_get_finish_time')
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_untar_start_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_s3_get_finish_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_untar_start_time')
               @utils.extract_backup(@backup_archive)
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_untar_finish_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_untar_finish_time')
               if @verify then
-                StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_verify_start_time')
+                StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_verify_start_time')
                 verify_hash_file = @cmd.run_and_capture('gpg', ['--local-user', @gpg_key, '--verify', 'SHA256SUMS.sig', 'SHA256SUMS', '2>&1'])
                 if verify_hash_file.success then
                   puts "info: gpg signature processed ok"
@@ -177,19 +177,19 @@ module StellarCoreBackup
                 end
                 if StellarCoreBackup::Utils.confirm_shasums_definitive(@working_dir, @backup_archive) then
                   puts 'info: SHA256SUMS file list matches delivered archive'
-                  StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_verify_finish_time')
+                  StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_verify_finish_time')
                 else
                   puts 'error: unknown additional file(s) detected in archive'
                   raise StandardError
                 end
               end
               StellarCoreBackup::Utils.cleanbucket(@fs_restore.core_data_dir) if @clean
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_fs_restore_start_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_fs_restore_start_time')
               @fs_restore.restore(@backup_archive)
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_fs_restore_finish_time')
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_db_restore_start_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_fs_restore_finish_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_db_restore_start_time')
               @db_restore.restore()
-              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_db_restore_finish_time')
+              StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_db_restore_finish_time')
 
               # restart stellar-core post restore
               puts 'info: starting stellar-core'
@@ -212,9 +212,9 @@ module StellarCoreBackup
             puts e
             # clean up working_dir
             StellarCoreBackup::Utils.cleanup(@working_dir)
-            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_fail_time')
+            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_fail_time')
           else
-            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'restore_success_time')
+            StellarCoreBackup::Utils.push_metric(@pushgateway_url, 'stellar_core_restore_success_time')
           end
       end
     end
