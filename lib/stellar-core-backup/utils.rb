@@ -1,4 +1,8 @@
 require 'fileutils'
+require 'net/http'
+require 'json'
+require 'time'
+
 
 module StellarCoreBackup
   class Utils
@@ -131,6 +135,62 @@ module StellarCoreBackup
     def self.num_cores?()
       require 'etc'
       return Etc.nprocessors
+    end
+
+    # check stellar-core status
+    Contract StellarCoreBackup::Config => Bool
+    def self.core_healthy?(config)
+      port = get_admin_port(config.get('core_config'))
+      url = "http://127.0.0.1:%s/info" % port
+      uri = URI(url)
+      begin
+        response = Net::HTTP.get(uri)
+        state = JSON.parse(response)['info']['state']
+        if state == 'Synced!' then
+          puts "info: stellar-core up and synced"
+          return true
+        else
+          puts "error: stellar-core status is: %s" % state
+          return false
+        end
+      rescue
+        puts "info: stellar-core down or not synced"
+        return false
+      end
+    end
+
+    private
+    Contract String => String
+    def self.get_admin_port(config)
+      File.open(config,'r') do |fd|
+        fd.each_line do |line|
+          if (line[/^HTTP_PORT=/]) then
+            port = /^HTTP_PORT=(.*)/.match(line).captures[0]
+            return port
+          end
+        end
+      end
+    end
+
+    # Publishes metric to pushgateway
+    # if no value provided current epoch timestamp will be used
+    Contract Any, String, Any => Bool
+    def self.push_metric(url, metric, value=nil)
+      if url.nil? then
+        # No url means pushgateway URL is not configured
+        return false
+      end
+
+      if value.nil? then
+          value = Time.now.to_i
+      end
+
+      uri = URI(url)
+      req = Net::HTTP::Post.new(uri.request_uri)
+      req.body = "%s %i\n" % [metric, value]
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.request(req)
+      return true
     end
 
   end

@@ -29,6 +29,7 @@ We are using SKS Keyservers for public key distribution available at hkp://pool.
 |s3_bucket| S3 bucket to store/retrieve buckets to/from|
 |s3_path| S3 Path prefix, can be used for backing up multiple core nodes to the same bucket|
 |gpg_key| GPG key ID used for signing and verification of the stellar-core backups. The provided ID is the Stellar public key|
+|pushgateway_url| Optional prometheus pushgateway URL to publish metrics to|
 
 ## Usage As Command Line Tool
 

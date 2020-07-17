@@ -5,3 +5,4 @@ s3_region: us-east-1
 s3_bucket: stellar002-core-backups
 s3_path: testnet
 gpg_key: 'D99E1D15ACC358AB'
+pushgateway_url: http://127.0.0.1:9091/metrics/job/stellar-core-backup/instance/dev
